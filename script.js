@@ -1,4 +1,3 @@
-// ===== GNG AI - Main Script =====
 var API_URL = 'https://api-free.ir/api/chat.php';
 var messagesDiv = document.getElementById('messages');
 var userInput = document.getElementById('userInput');
@@ -7,7 +6,6 @@ var typingEl = document.getElementById('typing');
 var emptyState = document.getElementById('emptyState');
 var clearBtn = document.getElementById('clearBtn');
 
-// ===== تاریخچه =====
 var history = JSON.parse(localStorage.getItem('gng_ai_history') || '[]');
 
 function saveHistory() {
@@ -24,7 +22,6 @@ function loadHistory() {
     }
 }
 
-// ===== اضافه کردن پیام =====
 function addMessage(role, text, save) {
     if (save === undefined) save = true;
     emptyState.style.display = 'none';
@@ -33,20 +30,12 @@ function addMessage(role, text, save) {
     msgDiv.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
     
     var time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-    
-    var copyBtn = '';
-    if (role === 'ai') {
-        copyBtn = '<button class="msg-copy" onclick="copyText(this)">📋 کپی</button>';
-    }
+    var copyBtn = role === 'ai' ? '<button class="msg-copy" onclick="copyText(this)">📋 کپی</button>' : '';
     
     msgDiv.innerHTML = '<div class="msg-avatar">' + (role === 'user' ? '👤' : '🤖') + '</div>' +
-        '<div>' +
-            '<div class="msg-content">' + formatText(text) + '</div>' +
-            '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">' +
-                '<span class="msg-time">' + time + '</span>' +
-                copyBtn +
-            '</div>' +
-        '</div>';
+        '<div><div class="msg-content">' + formatText(text) + '</div>' +
+        '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">' +
+        '<span class="msg-time">' + time + '</span>' + copyBtn + '</div></div>';
     
     messagesDiv.appendChild(msgDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -58,25 +47,22 @@ function addMessage(role, text, save) {
     }
 }
 
-// ===== فرمت متن =====
 function formatText(text) {
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    text = text.replace(/`(.*?)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-size:0.85em">$1</code>');
+    text = text.replace(/`(.*?)`/g, '<code>$1</code>');
     text = text.replace(/\n/g, '<br>');
     return text;
 }
 
-// ===== کپی متن =====
 function copyText(btn) {
     var text = btn.parentElement.parentElement.querySelector('.msg-content').textContent;
     navigator.clipboard.writeText(text).then(function() {
-        btn.textContent = '✅ کپی شد';
+        btn.textContent = '✅';
         setTimeout(function() { btn.textContent = '📋 کپی'; }, 1500);
     });
 }
 
-// ===== ارسال پیام =====
-function sendMessage() {
+async function sendMessage() {
     var text = userInput.value.trim();
     if (!text) return;
 
@@ -85,41 +71,50 @@ function sendMessage() {
     sendBtn.disabled = true;
     typingEl.classList.add('show');
 
-    fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        typingEl.classList.remove('show');
-        var reply = 'متأسفم، خطایی رخ داد. دوباره تلاش کنید.';
+    try {
+        // ===== روش‌های مختلف ارسال =====
+        var response;
         
-        if (data && data.response) reply = data.response;
-        else if (data && data.reply) reply = data.reply;
-        else if (data && data.message) reply = data.message;
-        else if (data && data.result) reply = data.result;
-        else if (data && data.text) reply = data.text;
-        else if (typeof data === 'string') reply = data;
+        // روش ۱: POST
+        try {
+            response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, prompt: text, text: text })
+            });
+        } catch(e) {}
+        
+        // روش ۲: GET
+        if (!response || !response.ok) {
+            try {
+                response = await fetch(API_URL + '?message=' + encodeURIComponent(text));
+            } catch(e) {}
+        }
+        
+        typingEl.classList.remove('show');
+        
+        var reply = '⚠️ خطا در دریافت پاسخ. لطفاً دوباره تلاش کنید.';
+        
+        if (response && response.ok) {
+            var data = await response.json();
+            reply = data.response || data.reply || data.message || data.result || data.text || data.output || data.answer || JSON.stringify(data);
+        }
         
         addMessage('ai', reply);
-        sendBtn.disabled = false;
-        userInput.focus();
-    })
-    .catch(function() {
+    } catch (error) {
         typingEl.classList.remove('show');
-        addMessage('ai', '⚠️ خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.');
-        sendBtn.disabled = false;
-        userInput.focus();
-    });
+        addMessage('ai', '⚠️ خطا در ارتباط با سرور API. دوباره تلاش کنید.');
+    }
+
+    sendBtn.disabled = false;
+    userInput.focus();
 }
 
-// ===== پاک کردن تاریخچه =====
 function clearHistory() {
     if (confirm('از پاک کردن تمام تاریخچه مطمئن هستید؟')) {
         history = [];
         saveHistory();
-        messagesDiv.innerHTML = '<div class="empty-state" id="emptyState"><div class="empty-icon">🤖</div><p>تاریخچه پاک شد</p></div>';
+        messagesDiv.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><p>تاریخچه پاک شد</p></div>';
     }
 }
 
