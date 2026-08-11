@@ -40,7 +40,7 @@ async function sendMessage() {
         
         typingEl.classList.remove('show');
         var data = await resp.json();
-        addMessage('ai', data.reply || '✅ پاسخ دریافت شد');
+        addMessage('ai', data.reply || '✅ دریافت شد');
     } catch (e) {
         typingEl.classList.remove('show');
         addMessage('ai', '⚠️ خطا در ارتباط');
