@@ -8,14 +8,14 @@
 </head>
 <body>
 
-<!-- HEADER -->
+<div class="bg-grid"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
 <header class="header">
     <div class="header-brand">
         <div class="header-logo">🤖</div>
-        <div>
-            <h1>GNG AI</h1>
-            <p class="header-sub">هوش مصنوعی ایرانی</p>
-        </div>
+        <div><h1>GNG AI</h1><p class="header-sub">هوش مصنوعی ایرانی</p></div>
     </div>
     <nav class="header-btns">
         <a href="https://rubika.ir/admin10blue" target="_blank" rel="noopener" class="hbtn hbtn-admin">👤 ادمین</a>
@@ -25,25 +25,20 @@
     </nav>
 </header>
 
-<!-- MESSAGES -->
 <main class="messages" id="messages">
     <div class="empty-state" id="emptyState">
-        <div class="empty-icon">🤖</div>
-        <p>از GNG AI بپرس...</p>
-        <p class="empty-hint">سوالات علمی، برنامه‌نویسی، ترجمه و بیشتر</p>
+        <div><span class="empty-icon">🤖</span><p>از GNG AI بپرس...</p><p class="empty-hint">سوالات علمی، برنامه‌نویسی، ترجمه و بیشتر</p></div>
     </div>
     <div class="typing" id="typing">🤖 GNG AI در حال نوشتن...</div>
 </main>
 
-<!-- INPUT -->
 <footer class="input-area">
-    <input type="text" id="userInput" class="chat-input" placeholder="سوال خود را بنویسید..." autocomplete="off">
-    <button id="sendBtn" class="send-btn" aria-label="ارسال">🚀</button>
+    <input type="text" class="chat-input" id="userInput" placeholder="سوال خود را بنویسید..." autocomplete="off">
+    <button class="send-btn" id="sendBtn">🚀</button>
 </footer>
 
 <button class="clear-btn" id="clearBtn">🗑️ پاک کردن تاریخچه</button>
 
-<!-- MOBILE MENU -->
 <nav class="mobile-menu">
     <a href="https://rubika.ir/admin10blue" target="_blank" rel="noopener" class="hbtn hbtn-admin">👤 ادمین</a>
     <a href="https://rubika.ir/GrahamBot" target="_blank" rel="noopener" class="hbtn hbtn-bot">🤖 بات</a>
