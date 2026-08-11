@@ -1,24 +1,15 @@
-var API_URL = 'https://api-free.ir/api/chat.php';
+var API_URL = '/api/chat';
 var messagesDiv = document.getElementById('messages');
 var userInput = document.getElementById('userInput');
 var sendBtn = document.getElementById('sendBtn');
 var typingEl = document.getElementById('typing');
 var emptyState = document.getElementById('emptyState');
 var clearBtn = document.getElementById('clearBtn');
-var history = JSON.parse(localStorage.getItem('gng_ai_history') || '[]');
 
-function saveHistory() { localStorage.setItem('gng_ai_history', JSON.stringify(history)); }
+// ===== Session History (با رفرش پاک میشه) =====
+var sessionHistory = [];
 
-function loadHistory() {
-    if (history.length > 0) {
-        emptyState.style.display = 'none';
-        history.forEach(function(msg) { addMessage(msg.role, msg.text, false); });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-}
-
-function addMessage(role, text, save) {
-    if (save === undefined) save = true;
+function addMessage(role, text) {
     emptyState.style.display = 'none';
     var div = document.createElement('div');
     div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
@@ -27,7 +18,6 @@ function addMessage(role, text, save) {
     div.innerHTML = '<div class="msg-avatar">' + (role === 'user' ? '👤' : '🤖') + '</div><div><div class="msg-content">' + text.replace(/\n/g, '<br>') + '</div><div style="display:flex;align-items:center;gap:5px;margin-top:3px"><span class="msg-time">' + time + '</span>' + copyBtn + '</div></div>';
     messagesDiv.appendChild(div);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    if (save) { history.push({ role: role, text: text, time: Date.now() }); if (history.length > 100) history = history.slice(-100); saveHistory(); }
 }
 
 function copyText(btn) {
@@ -38,6 +28,7 @@ function copyText(btn) {
 async function sendMessage() {
     var text = userInput.value.trim();
     if (!text) return;
+    
     addMessage('user', text);
     userInput.value = '';
     sendBtn.disabled = true;
@@ -49,38 +40,31 @@ async function sendMessage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: text })
         });
+        
         typingEl.classList.remove('show');
+        
         if (resp.ok) {
             var data = await resp.json();
-            var reply = data.response || data.reply || data.message || data.result || data.text || '✅ پاسخ دریافت شد';
-            addMessage('ai', reply);
+            addMessage('ai', data.reply || data.response || '✅ پاسخ دریافت شد');
         } else {
-            var resp2 = await fetch(API_URL + '?text=' + encodeURIComponent(text));
-            if (resp2.ok) {
-                var data2 = await resp2.json();
-                addMessage('ai', data2.response || data2.reply || JSON.stringify(data2));
-            } else {
-                addMessage('ai', '⚠️ خطا در دریافت پاسخ');
-            }
+            addMessage('ai', '⚠️ خطا در دریافت پاسخ. دوباره تلاش کنید.');
         }
     } catch (e) {
         typingEl.classList.remove('show');
-        addMessage('ai', '⚠️ خطا در ارتباط. دوباره تلاش کنید.');
+        addMessage('ai', '⚠️ خطا در ارتباط با سرور');
     }
+    
     sendBtn.disabled = false;
     userInput.focus();
 }
 
 function clearHistory() {
-    if (confirm('از پاک کردن تمام تاریخچه مطمئن هستید؟')) {
-        history = [];
-        saveHistory();
-        messagesDiv.innerHTML = '<div class="empty-state"><div><span class="empty-icon">🤖</span><p>تاریخچه پاک شد</p></div></div>';
-    }
+    messagesDiv.innerHTML = '<div class="empty-state"><div><span class="empty-icon">🤖</span><p>گفتگوی جدید شروع شد</p><p class="empty-hint">سوالات علمی، برنامه‌نویسی، ترجمه و بیشتر</p></div></div><div class="typing" id="typing">🤖 GNG AI در حال نوشتن...</div>';
+    typingEl = document.getElementById('typing');
+    emptyState = document.getElementById('emptyState');
 }
 
 sendBtn.addEventListener('click', sendMessage);
 userInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(); });
 clearBtn.addEventListener('click', clearHistory);
-loadHistory();
 userInput.focus();
