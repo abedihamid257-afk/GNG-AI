@@ -6,9 +6,6 @@ var typingEl = document.getElementById('typing');
 var emptyState = document.getElementById('emptyState');
 var clearBtn = document.getElementById('clearBtn');
 
-// ===== Session History (با رفرش پاک میشه) =====
-var sessionHistory = [];
-
 function addMessage(role, text) {
     emptyState.style.display = 'none';
     var div = document.createElement('div');
@@ -42,16 +39,11 @@ async function sendMessage() {
         });
         
         typingEl.classList.remove('show');
-        
-        if (resp.ok) {
-            var data = await resp.json();
-            addMessage('ai', data.reply || data.response || '✅ پاسخ دریافت شد');
-        } else {
-            addMessage('ai', '⚠️ خطا در دریافت پاسخ. دوباره تلاش کنید.');
-        }
+        var data = await resp.json();
+        addMessage('ai', data.reply || '✅ پاسخ دریافت شد');
     } catch (e) {
         typingEl.classList.remove('show');
-        addMessage('ai', '⚠️ خطا در ارتباط با سرور');
+        addMessage('ai', '⚠️ خطا در ارتباط');
     }
     
     sendBtn.disabled = false;
@@ -59,7 +51,7 @@ async function sendMessage() {
 }
 
 function clearHistory() {
-    messagesDiv.innerHTML = '<div class="empty-state"><div><span class="empty-icon">🤖</span><p>گفتگوی جدید شروع شد</p><p class="empty-hint">سوالات علمی، برنامه‌نویسی، ترجمه و بیشتر</p></div></div><div class="typing" id="typing">🤖 GNG AI در حال نوشتن...</div>';
+    messagesDiv.innerHTML = '<div class="empty-state" id="emptyState"><div><span class="empty-icon">🤖</span><p>گفتگوی جدید</p><p class="empty-hint">سوال جدید بپرس!</p></div></div><div class="typing" id="typing">🤖 GNG AI در حال نوشتن...</div>';
     typingEl = document.getElementById('typing');
     emptyState = document.getElementById('emptyState');
 }
