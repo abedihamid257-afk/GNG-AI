@@ -1,56 +1,32 @@
-/* ===== متغیرهای اصلی ===== */
 :root {
     --bg: #0a0a14;
     --card: #12122a;
     --text: #e8e8f0;
     --text2: #9090b0;
     --primary: #7C3AED;
-    --primary-light: #8B5CF6;
     --secondary: #06B6D4;
-    --accent: #F43F5E;
-    --green: #10B981;
     --gold: #F59E0B;
-    --gold-light: #FBBF24;
-    --silver: #94A3B8;
-    --border: rgba(255, 255, 255, 0.06);
-    --border-hover: rgba(255, 255, 255, 0.12);
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --border: rgba(255, 255, 255, 0.08);
     --radius: 20px;
-    --radius-sm: 14px;
-    --radius-xs: 10px;
-    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ===== ریست کلی ===== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html {
-    scroll-behavior: smooth;
-    -webkit-text-size-adjust: 100%;
-}
-
 body {
-    font-family: 'Segoe UI', 'Tahoma', 'Vazirmatn', sans-serif;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 16px;
-    position: relative;
-    -webkit-tap-highlight-color: transparent;
-    overflow-x: hidden;
-    line-height: 1.6;
 }
 
-/* ===== پس‌زمینه گرید ===== */
 .bg-grid {
     position: fixed;
     top: 0;
@@ -59,23 +35,12 @@ body {
     height: 100%;
     pointer-events: none;
     z-index: 0;
-    background-image:
-        linear-gradient(rgba(124, 58, 237, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+    background-image: 
+        linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
     background-size: 50px 50px;
-    animation: gridShift 30s linear infinite;
 }
 
-@keyframes gridShift {
-    0% {
-        transform: translate(0, 0);
-    }
-    100% {
-        transform: translate(50px, 50px);
-    }
-}
-
-/* ===== کانتینر اصلی ===== */
 .container {
     position: relative;
     z-index: 2;
@@ -84,635 +49,196 @@ body {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 28px 24px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    animation: fadeInUp 0.5s ease;
+    padding: 24px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ===== هدر ===== */
 .header {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
     text-align: center;
-    position: relative;
-}
-
-.header::after {
-    content: '';
-    position: absolute;
-    bottom: -14px;
-    left: 20%;
-    right: 20%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border), transparent);
 }
 
 .logo {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
-    width: 52px;
-    height: 52px;
-    border-radius: var(--radius-sm);
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
-    animation: logoGlow 3s ease-in-out infinite;
-    position: relative;
-    overflow: hidden;
-}
-
-.logo::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
-    animation: logoShine 4s ease-in-out infinite;
-}
-
-@keyframes logoGlow {
-    0%, 100% {
-        box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
-    }
-    50% {
-        box-shadow: 0 0 50px rgba(6, 182, 212, 0.7);
-    }
-}
-
-@keyframes logoShine {
-    0%, 100% {
-        transform: translate(-30%, -30%) rotate(0deg);
-    }
-    50% {
-        transform: translate(30%, 30%) rotate(180deg);
-    }
+    font-size: 1.8rem;
 }
 
 h1 {
-    font-size: 1.9rem;
+    font-size: 1.6rem;
     font-weight: 800;
-    background: linear-gradient(to left, var(--gold-light), var(--gold), #D97706);
+    background: linear-gradient(to left, #fbbf24, #f59e0b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    letter-spacing: -0.5px;
-    text-shadow: none;
 }
 
 .subtitle {
     color: var(--text2);
-    font-size: 0.8rem;
-    margin-top: -4px;
-    letter-spacing: 1.5px;
-    font-weight: 400;
-    opacity: 0.8;
+    font-size: 0.75rem;
+    margin-top: 2px;
 }
 
-/* ===== ردیف بروزرسانی ===== */
 .update-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+    gap: 10px;
     flex-wrap: wrap;
-    gap: 12px;
-    padding: 8px 0;
 }
 
 .last-update {
-    background: rgba(255, 255, 255, 0.03);
-    padding: 8px 16px;
+    background: rgba(255,255,255,0.03);
+    padding: 6px 14px;
     border-radius: 30px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text2);
     border: 1px solid var(--border);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    transition: var(--transition);
-    white-space: nowrap;
-}
-
-.last-update:hover {
-    border-color: var(--border-hover);
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .refresh-btn {
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.1));
-    border: 1px solid rgba(124, 58, 237, 0.4);
+    background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.2));
+    border: 1px solid rgba(124,58,237,0.5);
     color: white;
-    padding: 10px 22px;
+    padding: 8px 18px;
     border-radius: 30px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: var(--transition);
+    gap: 6px;
     font-family: inherit;
-    white-space: nowrap;
-    position: relative;
-    overflow: hidden;
-}
-
-.refresh-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.5s;
-}
-
-.refresh-btn:hover::before {
-    left: 100%;
 }
 
 .refresh-btn:hover {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
 }
 
-.refresh-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-}
-
-.refresh-btn span {
-    display: inline-block;
-    transition: transform 0.3s;
-}
-
-.refresh-btn:hover span {
-    transform: rotate(180deg);
-}
-
-/* ===== گرید قیمت‌ها ===== */
 .prices-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
-    gap: 14px;
-    margin-top: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
 }
 
 .price-card {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 20px 14px;
+    border-radius: 16px;
+    padding: 16px 12px;
     text-align: center;
-    transition: var(--transition);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    position: relative;
-    overflow: hidden;
-    cursor: default;
-}
-
-.price-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--primary), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-.price-card:hover::before {
-    opacity: 1;
+    transition: 0.3s;
 }
 
 .price-card:hover {
-    background: rgba(124, 58, 237, 0.06);
-    border-color: var(--border-hover);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(124, 58, 237, 0.1);
+    background: rgba(124,58,237,0.08);
+    border-color: var(--primary);
+    transform: translateY(-3px);
 }
 
-.price-card:active {
-    transform: translateY(-2px);
-}
-
-/* ===== نام ارز ===== */
 .currency-name {
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     color: var(--text2);
-    margin-bottom: 8px;
-    font-weight: 500;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    letter-spacing: 0.3px;
+    gap: 5px;
 }
 
 .currency-icon {
-    font-size: 1.3rem;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    font-size: 1.2rem;
 }
 
-/* ===== قیمت ===== */
 .price-value {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 800;
     color: var(--gold);
     direction: ltr;
-    display: inline-block;
-    margin: 6px 0;
-    text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
-    letter-spacing: 0.5px;
-    transition: color 0.3s;
 }
 
-.price-card:hover .price-value {
-    color: var(--gold-light);
-    text-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
-}
-
-/* ===== واحد ===== */
 .unit-text {
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     color: var(--text2);
-    margin-top: -2px;
-    margin-bottom: 6px;
-    opacity: 0.7;
-    letter-spacing: 0.5px;
+    margin: 2px 0 4px;
 }
 
-/* ===== درصد تغییرات ===== */
 .change {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    margin-top: 6px;
-    padding: 3px 10px;
-    border-radius: 20px;
+    padding: 2px 8px;
+    border-radius: 15px;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.03);
-    transition: var(--transition);
+    gap: 3px;
 }
 
 .positive {
-    color: var(--green);
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #10B981;
+    background: rgba(16,185,129,0.1);
 }
 
 .negative {
-    color: var(--accent);
-    background: rgba(244, 63, 94, 0.1);
-    border: 1px solid rgba(244, 63, 94, 0.2);
+    color: #F43F5E;
+    background: rgba(244,63,94,0.1);
 }
 
-.price-card:hover .positive {
-    background: rgba(16, 185, 129, 0.15);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
-}
-
-.price-card:hover .negative {
-    background: rgba(244, 63, 94, 0.15);
-    box-shadow: 0 0 10px rgba(244, 63, 94, 0.2);
-}
-
-/* ===== لودینگ ===== */
 .loading-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: 30px;
     color: var(--text2);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
 }
 
 .loader {
     display: inline-block;
-    width: 28px;
-    height: 28px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255,255,255,0.1);
     border-top: 3px solid var(--gold);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
 
-.loader-text {
-    font-size: 0.9rem;
-    color: var(--text2);
-    animation: pulse 2s ease-in-out infinite;
-}
-
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 0.6;
-    }
-    50% {
-        opacity: 1;
-    }
-}
-
-/* ===== پیام خطا ===== */
 .error-message {
-    background: rgba(244, 63, 94, 0.08);
-    border: 1px solid rgba(244, 63, 94, 0.3);
+    background: rgba(244,63,94,0.1);
+    border: 1px solid #F43F5E;
     color: #FCA5A5;
-    padding: 16px 20px;
-    border-radius: var(--radius-sm);
+    padding: 14px;
+    border-radius: 14px;
     text-align: center;
-    font-size: 0.9rem;
-    line-height: 1.8;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
 }
 
-.error-message small {
-    display: block;
-    margin-top: 6px;
-    font-size: 0.78rem;
-    opacity: 0.7;
-}
-
-/* ===== فوتر ===== */
 .footer {
-    margin-top: 24px;
+    margin-top: 20px;
     text-align: center;
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     color: var(--text2);
     opacity: 0.4;
-    letter-spacing: 0.5px;
-    transition: opacity 0.3s;
 }
 
-.footer:hover {
-    opacity: 0.7;
-}
-
-/* ===== مدال طلایی برای کارت‌های طلا ===== */
-.price-card[data-type="gold"] {
-    border-color: rgba(245, 158, 11, 0.2);
-    background: rgba(245, 158, 11, 0.03);
-}
-
-.price-card[data-type="gold"]:hover {
-    border-color: rgba(245, 158, 11, 0.4);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 158, 11, 0.15);
-}
-
-.price-card[data-type="gold"] .price-value {
-    color: #FBBF24;
-}
-
-/* ===== مدال نقره‌ای ===== */
-.price-card[data-type="metal"] {
-    border-color: rgba(148, 163, 184, 0.2);
-}
-
-.price-card[data-type="metal"]:hover {
-    border-color: rgba(148, 163, 184, 0.4);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 30px rgba(148, 163, 184, 0.1);
-}
-
-.price-card[data-type="metal"] .price-value {
-    color: #CBD5E1;
-}
-
-/* ===== اسکرول‌بار سفارشی ===== */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
-}
-
-/* ===== سلیکت ===== */
-::selection {
-    background: var(--primary);
-    color: white;
-}
-
-/* ===== فوکوس ===== */
-:focus-visible {
-    outline: 2px solid var(--secondary);
-    outline-offset: 2px;
-    border-radius: 4px;
-}
-
-/* ===== ریسپانسیو ===== */
-@media (max-width: 768px) {
-    .container {
-        padding: 20px 16px;
-        border-radius: var(--radius-sm);
-    }
-
-    h1 {
-        font-size: 1.5rem;
-    }
-
-    .prices-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 10px;
-    }
-
-    .price-card {
-        padding: 16px 10px;
-    }
-
-    .price-value {
-        font-size: 1.3rem;
-    }
-
-    .logo {
-        width: 44px;
-        height: 44px;
-        font-size: 1.6rem;
-    }
-}
-
-@media (max-width: 480px) {
-    body {
-        padding: 8px;
-    }
-
-    .container {
-        padding: 16px 12px;
-    }
-
-    h1 {
-        font-size: 1.3rem;
-    }
-
-    .subtitle {
-        font-size: 0.7rem;
-    }
-
+@media (max-width: 500px) {
     .prices-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
     }
-
-    .price-card {
-        padding: 14px 8px;
-        border-radius: var(--radius-xs);
-    }
-
     .price-value {
-        font-size: 1.15rem;
-    }
-
-    .currency-name {
-        font-size: 0.72rem;
-        gap: 4px;
-    }
-
-    .currency-icon {
         font-size: 1.1rem;
     }
-
-    .update-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-
-    .refresh-btn {
-        justify-content: center;
-        width: 100%;
-    }
-
-    .last-update {
-        text-align: center;
-    }
-
-    .header {
-        gap: 10px;
-    }
-
-    .logo {
-        width: 40px;
-        height: 40px;
-        font-size: 1.4rem;
-        border-radius: var(--radius-xs);
-    }
-
-    .header::after {
-        bottom: -10px;
-        left: 10%;
-        right: 10%;
-    }
-
-    .change {
-        font-size: 0.68rem;
-        padding: 2px 8px;
-    }
-
-    .unit-text {
-        font-size: 0.62rem;
-    }
-}
-
-@media (max-width: 350px) {
-    .prices-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
-    }
-
-    .price-card {
-        padding: 12px 6px;
-    }
-
-    .price-value {
-        font-size: 1rem;
-    }
-
     h1 {
-        font-size: 1.1rem;
-    }
-}
-
-/* ===== حالت تاریک سیستم ===== */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #0a0a14;
-        --card: #12122a;
-    }
-}
-
-/* ===== حالت روشن (اختیاری) ===== */
-@media (prefers-color-scheme: light) {
-    /* اگه خواستی نسخه روشن هم بسازی، اینجا تغییر بده */
-}
-
-/* ===== پرینت ===== */
-@media print {
-    .bg-grid {
-        display: none;
-    }
-    
-    .refresh-btn {
-        display: none;
-    }
-    
-    body {
-        background: white;
-        color: black;
-    }
-    
-    .container {
-        box-shadow: none;
-        border: 1px solid #ddd;
-    }
-}
-
-/* ===== کاهش حرکت برای دسترسی‌پذیری ===== */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        font-size: 1.3rem;
     }
 }
