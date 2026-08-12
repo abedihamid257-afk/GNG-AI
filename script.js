@@ -6,13 +6,33 @@ var typingEl = document.getElementById('typing');
 var emptyState = document.getElementById('emptyState');
 var clearBtn = document.getElementById('clearBtn');
 
+// ===== MENU =====
+var menuBtn = document.getElementById('menuBtn');
+var menuPanel = document.getElementById('menuPanel');
+var menuOverlay = document.getElementById('menuOverlay');
+var menuClose = document.getElementById('menuClose');
+
+menuBtn.addEventListener('click', function() {
+    menuPanel.classList.add('show');
+    menuOverlay.classList.add('show');
+});
+menuClose.addEventListener('click', function() {
+    menuPanel.classList.remove('show');
+    menuOverlay.classList.remove('show');
+});
+menuOverlay.addEventListener('click', function() {
+    menuPanel.classList.remove('show');
+    menuOverlay.classList.remove('show');
+});
+
+// ===== CHAT =====
 function addMessage(role, text) {
     emptyState.style.display = 'none';
     var div = document.createElement('div');
     div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
     var time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
     var copyBtn = role === 'ai' ? '<button class="msg-copy" onclick="copyText(this)">📋 کپی</button>' : '';
-    div.innerHTML = '<div class="msg-avatar">' + (role === 'user' ? '👤' : '🤖') + '</div><div><div class="msg-content">' + text.replace(/\n/g, '<br>') + '</div><div style="display:flex;align-items:center;gap:5px;margin-top:3px"><span class="msg-time">' + time + '</span>' + copyBtn + '</div></div>';
+    div.innerHTML = '<div class="msg-avatar">' + (role === 'user' ? '👤' : '🤖') + '</div><div><div class="msg-content">' + text + '</div><div style="display:flex;align-items:center;gap:5px;margin-top:3px"><span class="msg-time">' + time + '</span>' + copyBtn + '</div></div>';
     messagesDiv.appendChild(div);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
@@ -37,7 +57,6 @@ async function sendMessage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: text })
         });
-        
         typingEl.classList.remove('show');
         var data = await resp.json();
         addMessage('ai', data.reply || '✅ دریافت شد');
