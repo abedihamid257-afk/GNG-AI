@@ -3,54 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GNG Tools | ابزارهای کاربردی</title>
+    <title>قیمت ارز و طلا | GNG Tools</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="bg-grid"></div>
 
-<header class="header">
-    <div class="header-brand">
-        <div class="header-logo">🛠️</div>
-        <div><h1>GNG Tools</h1><p class="header-sub">ابزارهای کاربردی ایرانی</p></div>
-    </div>
-    <button class="menu-btn" id="menuBtn">☰</button>
-</header>
-
-<div class="menu-overlay" id="menuOverlay"></div>
-<div class="menu-panel" id="menuPanel">
-    <button class="menu-close" id="menuClose">✕</button>
-    <h3>📋 منو</h3>
-    <a href="https://rubika.ir/admin10blue" target="_blank" rel="noopener" class="mbtn mbtn-admin">👤 ادمین</a>
-    <a href="https://rubika.ir/GrahamBot" target="_blank" rel="noopener" class="mbtn mbtn-bot">🤖 بات</a>
-    <a href="https://rubika.ir/Gameing019" target="_blank" rel="noopener" class="mbtn mbtn-channel">📢 کانال</a>
-    <a href="https://ttr.ir/ads019" target="_blank" rel="noopener" class="mbtn mbtn-ads">📢 تبلیغات</a>
-</div>
-
-<main class="main-content" id="mainContent">
-    <div class="main-card">
-        <h2><span class="icon icon-gold">💵</span> قیمت ارز و طلا</h2>
-        <div class="price-grid" id="arzPrices"><div class="loading">در حال دریافت</div></div>
-    </div>
-    <div class="main-card">
-        <h2><span class="icon icon-blue">🔧</span> ابزارهای کاربردی</h2>
-        <div class="tool-grid">
-            <button class="tool-btn" onclick="showTool('weather')">🌤️ آب و هوا</button>
-            <button class="tool-btn" onclick="showTool('tts')">🗣️ متن به صدا</button>
-            <button class="tool-btn" onclick="showTool('date')">📅 تاریخ امروز</button>
-            <button class="tool-btn" onclick="showTool('bio')">📝 بیوگرافی</button>
-            <button class="tool-btn" onclick="showTool('angizeshi')">💬 متن انگیزشی</button>
-            <button class="tool-btn" onclick="showTool('qr')">📱 QR Code</button>
-            <button class="tool-btn" onclick="showTool('shorten')">🔗 کوتاه کننده لینک</button>
-            <button class="tool-btn" onclick="showTool('news')">📰 اخبار</button>
+<div class="container">
+    <div class="header">
+        <div class="logo">💎</div>
+        <div>
+            <h1>قیمت ارز و طلا</h1>
+            <div class="subtitle">GNG Tools • نرخ‌های زنده</div>
         </div>
-        <div class="result-box" id="toolResult"></div>
-        <div class="input-row" id="toolInput" style="display:none"></div>
     </div>
-</main>
 
-<div class="version">GNG Tools v1.0 | Graham Team</div>
+    <div class="update-row">
+        <span class="last-update" id="updateTime">🕒 در حال بارگذاری...</span>
+        <button class="refresh-btn" id="refreshButton">
+            <span>🔄</span> بروزرسانی قیمت‌ها
+        </button>
+    </div>
+
+    <div id="pricesContainer">
+        <div class="loading-state">
+            <span class="loader"></span> در حال دریافت قیمت‌ها...
+        </div>
+    </div>
+
+    <div class="footer">Graham Team • قیمت‌ها از منابع معتبر</div>
+</div>
 
 <script src="script.js"></script>
 </body>
