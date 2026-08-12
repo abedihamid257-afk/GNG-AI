@@ -1,17 +1,64 @@
+/**
+ * =============================================
+ * GNG Tools - نمایش قیمت لحظه‌ای ارز و طلا
+ * Graham Team | v2.0
+ * =============================================
+ * 
+ * APIهای استفاده شده (همه رایگان و بدون ثبت‌نام):
+ * 
+ * 1. goldprice.dev        → قیمت لحظه‌ای طلا، نقره، مس (انس و گرم)
+ * 2. exchangerate.fun     → نرخ ۱۷۰+ ارز جهانی (به‌روزرسانی ساعتی)
+ * 3. api.liara.run        → قیمت ارز و طلا به تومان (منبع ایرانی)
+ * 4. frankfurter.app      → نرخ ارز بانک مرکزی اروپا (۳۰+ ارز)
+ * 5. api.codebazan.ir     → API جایگزین ایرانی
+ * 6. budjet.org           → نرخ ۱۶۱ ارز جهانی
+ */
+
 (function() {
     'use strict';
 
-    // ===== المنت‌های DOM =====
+    // ===== ارجاع به عناصر DOM =====
     const container = document.getElementById('pricesContainer');
     const updateTimeEl = document.getElementById('updateTime');
     const refreshBtn = document.getElementById('refreshButton');
 
-    // ===== APIهای رایگان بدون ثبت‌نام =====
-    const API_EXCHANGE = 'https://api.exchangerate.fun/latest?base=USD';
-    const API_GOLD = 'https://goldprice.dev/api/latest';
-    const API_IRAN_ARZ = 'https://api.liara.run/api/v1/currency?type=arz';
-    const API_IRAN_GOLD = 'https://api.liara.run/api/v1/currency?type=gold';
-    const API_FALLBACK = 'https://api.codebazan.ir/arz';
+    // ===== API Endpoints (پروکسی شده توسط Cloudflare Worker) =====
+    // اگه ورکر نداری، می‌تونی مستقیم از آدرس اصلی استفاده کنی:
+    
+    const API = {
+        // قیمت طلا و فلزات (از goldprice.dev)
+        gold: '/api/gold',
+        // نرخ ارز جهانی (از exchangerate.fun)
+        exchange: '/api/exchange?base=USD',
+        // قیمت ارز ایرانی به تومان (از liara)
+        arz: '/api/arz',
+        // قیمت طلا و سکه ایران (از liara)
+        goldIr: '/api/gold-ir',
+        // API جایگزین ایرانی (از codebazan)
+        fallback: '/api/fallback',
+        // نرخ ارز بانک مرکزی اروپا
+        ecb: '/api/ecb?from=USD',
+        // نرخ ارز از budjet.org
+        budjet: '/api/budjet?base=USD',
+        // نرخ ارز از CDN (irfanokr)
+        currency: '/api/currency?base=usd'
+    };
+
+    // ===== اگه ورکر نداری، اینو کامنت کن و پایینیه رو از کامنت دربیار =====
+    
+    /*
+    // آدرس‌های مستقیم (بدون ورکر) - اگه CORS اذیت کرد از اینا استفاده نکن
+    const API = {
+        gold: 'https://goldprice.dev/api/latest',
+        exchange: 'https://api.exchangerate.fun/latest?base=USD',
+        arz: 'https://api.liara.run/api/v1/currency?type=arz',
+        goldIr: 'https://api.liara.run/api/v1/currency?type=gold',
+        fallback: 'https://api.codebazan.ir/arz',
+        ecb: 'https://api.frankfurter.app/latest?from=USD',
+        budjet: 'https://api.budjet.org/fiat/USD',
+        currency: 'https://cdn.jsdelivr.net/gh/irfanokr/currency-api@main/v1/currencies/usd.json'
+    };
+    */
 
     // ===== نام‌های فارسی ارزها =====
     const persianNames = {
@@ -45,8 +92,16 @@
         'AZN': 'منات آذربایجان',
         'GEL': 'لاری گرجستان',
         'AMD': 'درام ارمنستان',
-        'IRR': 'ریال ایران',
-        'SYR': 'لیر سوریه'
+        'THB': 'بات تایلند',
+        'PHP': 'پزوی فیلیپین',
+        'IDR': 'روپیه اندونزی',
+        'VND': 'دانگ ویتنام',
+        'EGP': 'پوند مصر',
+        'NGN': 'نایرا نیجریه',
+        'ZAR': 'راند آفریقای جنوبی',
+        'MXN': 'پزوی مکزیک',
+        'BRL': 'رئال برزیل',
+        'ARS': 'پزوی آرژانتین'
     };
 
     // ===== آیکون‌های ارزها =====
@@ -81,45 +136,54 @@
         'AZN': '🇦🇿',
         'GEL': '🇬🇪',
         'AMD': '🇦🇲',
-        'IRR': '🇮🇷',
-        'SYR': '🇸🇾'
+        'THB': '🇹🇭',
+        'PHP': '🇵🇭',
+        'IDR': '🇮🇩',
+        'VND': '🇻🇳',
+        'EGP': '🇪🇬',
+        'NGN': '🇳🇬',
+        'ZAR': '🇿🇦',
+        'MXN': '🇲🇽',
+        'BRL': '🇧🇷',
+        'ARS': '🇦🇷'
     };
 
-    // ===== ارزهای اصلی به ترتیب نمایش =====
-    const mainCurrencies = ['USD', 'EUR', 'GBP', 'AED', 'TRY', 'CNY', 'JPY', 'CHF', 'CAD', 'AUD'];
+    // ===== ارزهای اصلی برای نمایش =====
+    const mainCurrencies = [
+        'USD', 'EUR', 'GBP', 'AED', 'TRY', 'CNY', 
+        'JPY', 'CHF', 'CAD', 'AUD', 'RUB', 'INR',
+        'SAR', 'OMR', 'KWD', 'BHD', 'QAR', 'MYR',
+        'SGD', 'HKD', 'KRW', 'THB', 'PHP', 'IDR'
+    ];
 
     // ===== متغیرهای گلوبال =====
-    let usdToIrr = null;
-    let isFirstLoad = true;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-
-    // ===== توابع کمکی =====
+    let usdToIrr = null;      // قیمت دلار به تومان
+    let lastUpdate = null;    // زمان آخرین بروزرسانی
+    let isUpdating = false;   // وضعیت بروزرسانی
 
     /**
-     * فرمت کردن عدد به صورت خوانا
-     * @param {number|string} price - قیمت
-     * @param {number} decimals - تعداد اعشار
+     * فرمت کردن عدد به صورت قیمت
+     * @param {number|string} price - قیمت ورودی
      * @returns {string} قیمت فرمت شده
      */
-    function formatPrice(price, decimals = 0) {
+    function formatPrice(price) {
         if (!price && price !== 0) return '---';
-        const num = parseFloat(String(price).replace(/[^\d.-]/g, ''));
+        let num = parseFloat(String(price).replace(/[^\d.-]/g, ''));
         if (isNaN(num)) return String(price);
         return num.toLocaleString('en-US', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         });
     }
 
     /**
-     * فرمت کردن قیمت به تومان (فارسی)
-     * @param {number|string} price - قیمت به تومان
-     * @returns {string} قیمت فرمت شده فارسی
+     * فرمت کردن عدد به تومان (بدون اعشار)
+     * @param {number} price - قیمت به تومان
+     * @returns {string} قیمت فرمت شده
      */
     function formatToman(price) {
         if (!price && price !== 0) return '---';
-        const num = Math.round(parseFloat(String(price).replace(/[^\d.-]/g, '')));
+        let num = Math.round(parseFloat(String(price).replace(/[^\d.-]/g, '')));
         if (isNaN(num)) return String(price);
         return num.toLocaleString('fa-IR');
     }
@@ -148,10 +212,11 @@
     function showLoading() {
         container.innerHTML = `
             <div class="loading-state">
-                <span class="loader"></span>
-                <span class="loader-text">در حال دریافت قیمت‌های لحظه‌ای...</span>
+                <div class="loader"></div>
+                <div class="loader-text">در حال دریافت قیمت‌های لحظه‌ای...</div>
             </div>
         `;
+        updateTimeEl.textContent = '🕒 در حال اتصال...';
     }
 
     /**
@@ -169,458 +234,285 @@
     }
 
     /**
-     * دریافت قیمت دلار به تومان از APIهای ایرانی
-     * @returns {Promise<number>} قیمت دلار به تومان
-     */
-    async function fetchUsdToToman() {
-        // تلاش اول: API لیارا برای ارز
-        try {
-            const response = await fetch(API_IRAN_ARZ);
-            if (response.ok) {
-                const data = await response.json();
-                if (data && data.arz) {
-                    // جستجوی دلار در داده‌ها
-                    for (const [key, value] of Object.entries(data.arz)) {
-                        if (key.includes('دلار') || key.toLowerCase().includes('dollar')) {
-                            const price = parseFloat(String(value).replace(/[^\d]/g, ''));
-                            if (price > 0) {
-                                console.log('✅ قیمت دلار از API لیارا:', price);
-                                return price;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('⚠️ خطا در API لیارا:', e.message);
-        }
-
-        // تلاش دوم: API کدبازان
-        try {
-            const response = await fetch(API_FALLBACK);
-            if (response.ok) {
-                const text = await response.text();
-                // جستجوی الگوی دلار در متن
-                const patterns = [
-                    /دلار[^\d]*?(\d{1,3}(?:,\d{3})*)/,
-                    /"دلار"[^\d]*?(\d{1,3}(?:,\d{3})*)/,
-                    /USD[^\d]*?(\d{1,3}(?:,\d{3})*)/
-                ];
-                
-                for (const pattern of patterns) {
-                    const match = text.match(pattern);
-                    if (match && match[1]) {
-                        const price = parseFloat(match[1].replace(/,/g, ''));
-                        if (price > 0 && price < 200000) { // محدوده منطقی برای دلار
-                            console.log('✅ قیمت دلار از API کدبازان:', price);
-                            return price;
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('⚠️ خطا در API کدبازان:', e.message);
-        }
-
-        // مقدار پیش‌فرض در صورت عدم دریافت
-        console.warn('⚠️ نتونستیم قیمت دلار رو بگیریم، از مقدار پیش‌فرض استفاده می‌کنیم');
-        return 65000; // مقدار تقریبی
-    }
-
-    /**
-     * دریافت قیمت طلا و فلزات از API
-     * @returns {Promise<Array>} آرایه قیمت‌های طلا
-     */
-    async function fetchGoldPrices() {
-        const goldItems = [];
-
-        // تلاش اول: API goldprice.dev
-        try {
-            const response = await fetch(API_GOLD);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 داده‌های طلا از goldprice.dev:', data);
-
-                // قیمت طلا (انس)
-                if (data.price) {
-                    goldItems.push({
-                        name: 'طلای جهانی (انس)',
-                        price: parseFloat(data.price),
-                        unit: 'دلار',
-                        icon: '🥇',
-                        type: 'gold',
-                        isOunce: true,
-                        priority: 1
-                    });
-                }
-
-                // قیمت طلا (گرم) - اگه API داشت
-                if (data.price_gram) {
-                    goldItems.push({
-                        name: 'طلای جهانی (گرم)',
-                        price: parseFloat(data.price_gram),
-                        unit: 'دلار',
-                        icon: '🥇',
-                        type: 'gold',
-                        priority: 2
-                    });
-                } else if (data.price) {
-                    // محاسبه قیمت هر گرم از روی انس (1 انس = 31.1035 گرم)
-                    goldItems.push({
-                        name: 'طلای جهانی (گرم)',
-                        price: parseFloat((data.price / 31.1035).toFixed(2)),
-                        unit: 'دلار',
-                        icon: '🥇',
-                        type: 'gold',
-                        priority: 2
-                    });
-                }
-
-                // قیمت نقره
-                if (data.silver_price) {
-                    goldItems.push({
-                        name: 'نقره (انس)',
-                        price: parseFloat(data.silver_price),
-                        unit: 'دلار',
-                        icon: '🥈',
-                        type: 'metal',
-                        priority: 3
-                    });
-                }
-            }
-        } catch (e) {
-            console.warn('⚠️ خطا در API طلای جهانی:', e.message);
-        }
-
-        // تلاش دوم: API ایرانی طلا
-        if (goldItems.length === 0) {
-            try {
-                const response = await fetch(API_IRAN_GOLD);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('📊 داده‌های طلا از API ایرانی:', data);
-                    
-                    if (data && data.gold) {
-                        for (const [key, value] of Object.entries(data.gold)) {
-                            let priceValue = value;
-                            if (typeof value === 'object' && value.price) {
-                                priceValue = value.price;
-                            }
-                            goldItems.push({
-                                name: key,
-                                price: String(priceValue).replace(/[^\d]/g, ''),
-                                unit: 'تومان',
-                                icon: '🥇',
-                                type: 'gold',
-                                priority: 4
-                            });
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('⚠️ خطا در API طلای ایرانی:', e.message);
-            }
-        }
-
-        return goldItems;
-    }
-
-    /**
-     * دریافت نرخ ارزهای جهانی
-     * @returns {Promise<Array>} آرایه نرخ ارزها
-     */
-    async function fetchCurrencyRates() {
-        const currencyItems = [];
-
-        try {
-            const response = await fetch(API_EXCHANGE);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 داده‌های ارز از exchangerate.fun:', data);
-
-                if (data && data.rates) {
-                    const rates = data.rates;
-
-                    for (const code of mainCurrencies) {
-                        if (rates[code]) {
-                            const rateToUsd = rates[code]; // ۱ USD = rateToUsd از این ارز
-                            const oneUnitToUsd = 1 / rateToUsd; // ۱ واحد از این ارز = X دلار
-                            const priceInToman = Math.round(oneUnitToUsd * (usdToIrr || 65000));
-
-                            currencyItems.push({
-                                name: getPersianName(code),
-                                price: priceInToman,
-                                unit: 'تومان',
-                                icon: getIcon(code),
-                                type: 'currency',
-                                code: code,
-                                rateToUsd: oneUnitToUsd,
-                                priority: mainCurrencies.indexOf(code) + 10
-                            });
-                        }
-                    }
-
-                    // اضافه کردن چند ارز اضافی اگه بودن
-                    const extraCurrencies = ['RUB', 'INR', 'SAR', 'MYR', 'SGD'];
-                    for (const code of extraCurrencies) {
-                        if (rates[code] && !mainCurrencies.includes(code)) {
-                            const rateToUsd = rates[code];
-                            const oneUnitToUsd = 1 / rateToUsd;
-                            const priceInToman = Math.round(oneUnitToUsd * (usdToIrr || 65000));
-
-                            currencyItems.push({
-                                name: getPersianName(code),
-                                price: priceInToman,
-                                unit: 'تومان',
-                                icon: getIcon(code),
-                                type: 'currency',
-                                code: code,
-                                rateToUsd: oneUnitToUsd,
-                                priority: 20
-                            });
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('⚠️ خطا در API ارز جهانی:', e.message);
-        }
-
-        return currencyItems;
-    }
-
-    /**
-     * دریافت قیمت‌ها از API ایرانی (حالت اضطراری)
+     * دریافت قیمت طلا و فلزات گرانبها
      * @returns {Promise<Array>} آرایه قیمت‌ها
      */
-    async function fetchIranianPrices() {
+    async function fetchGoldPrices() {
         const items = [];
-
+        
         try {
-            const response = await fetch(API_IRAN_ARZ);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 داده‌های اضطراری از API ایرانی:', data);
-
-                if (data && data.arz) {
-                    const priorityNames = ['دلار', 'یورو', 'پوند', 'درهم', 'لیر', 'یوان'];
-                    
-                    for (const [name, price] of Object.entries(data.arz)) {
-                        const cleanPrice = String(price).replace(/[^\d]/g, '');
-                        
-                        let icon = '💱';
-                        for (const pName of priorityNames) {
-                            if (name.includes(pName)) {
-                                const idx = priorityNames.indexOf(pName);
-                                const icons = ['🇺🇸', '🇪🇺', '🇬🇧', '🇦🇪', '🇹🇷', '🇨🇳'];
-                                icon = icons[idx] || '💱';
-                                break;
-                            }
-                        }
-
-                        items.push({
-                            name: name,
-                            price: cleanPrice,
-                            unit: 'تومان',
-                            icon: icon,
-                            type: 'currency',
-                            priority: 30
-                        });
-                    }
-                }
-
-                if (data && data.gold) {
-                    for (const [name, price] of Object.entries(data.gold)) {
-                        let priceValue = price;
-                        if (typeof price === 'object' && price.price) {
-                            priceValue = price.price;
-                        }
-                        items.push({
-                            name: name,
-                            price: String(priceValue).replace(/[^\d]/g, ''),
-                            unit: 'تومان',
-                            icon: '🥇',
-                            type: 'gold',
-                            priority: 1
-                        });
-                    }
-                }
+            const resp = await fetch(API.gold);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            
+            const data = await resp.json();
+            
+            // قیمت طلا به ازای هر اونس
+            if (data.price) {
+                items.push({
+                    name: 'طلای جهانی (انس)',
+                    price: data.price,
+                    unit: 'دلار / اونس',
+                    icon: '🥇',
+                    type: 'gold',
+                    priority: 1
+                });
             }
-        } catch (e) {
-            console.warn('⚠️ خطا در API ایرانی اضطراری:', e.message);
+            
+            // قیمت طلا به ازای هر گرم
+            if (data.price_gram) {
+                items.push({
+                    name: 'طلای جهانی (گرم)',
+                    price: data.price_gram,
+                    unit: 'دلار / گرم',
+                    icon: '🥇',
+                    type: 'gold',
+                    priority: 2
+                });
+            }
+            
+            // قیمت طلای ۲۴ عیار
+            if (data.price_gram_24k) {
+                items.push({
+                    name: 'طلای ۲۴ عیار (گرم)',
+                    price: data.price_gram_24k,
+                    unit: 'دلار / گرم',
+                    icon: '🥇',
+                    type: 'gold',
+                    priority: 3
+                });
+            }
+            
+            // قیمت طلای ۱۸ عیار
+            if (data.price_gram_18k) {
+                items.push({
+                    name: 'طلای ۱۸ عیار (گرم)',
+                    price: data.price_gram_18k,
+                    unit: 'دلار / گرم',
+                    icon: '🥇',
+                    type: 'gold',
+                    priority: 4
+                });
+            }
+            
+            // قیمت نقره
+            if (data.silver_price) {
+                items.push({
+                    name: 'نقره (انس)',
+                    price: data.silver_price,
+                    unit: 'دلار / اونس',
+                    icon: '🥈',
+                    type: 'metal',
+                    priority: 10
+                });
+            }
+            
+            // قیمت پلاتین
+            if (data.platinum_price) {
+                items.push({
+                    name: 'پلاتین (انس)',
+                    price: data.platinum_price,
+                    unit: 'دلار / اونس',
+                    icon: '🪨',
+                    type: 'metal',
+                    priority: 11
+                });
+            }
+            
+            // قیمت پالادیوم
+            if (data.palladium_price) {
+                items.push({
+                    name: 'پالادیوم (انس)',
+                    price: data.palladium_price,
+                    unit: 'دلار / اونس',
+                    icon: '🔩',
+                    type: 'metal',
+                    priority: 12
+                });
+            }
+            
+            // قیمت مس
+            if (data.copper_price) {
+                items.push({
+                    name: 'مس (انس)',
+                    price: data.copper_price,
+                    unit: 'دلار / اونس',
+                    icon: '🪙',
+                    type: 'metal',
+                    priority: 13
+                });
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ خطا در دریافت قیمت طلا:', error.message);
         }
-
+        
         return items;
     }
 
     /**
-     * تابع اصلی دریافت و نمایش قیمت‌ها
+     * دریافت نرخ ارز از exchangerate.fun
+     * @returns {Promise<Object>} آبجکت نرخ‌ها
      */
-    async function fetchPrices() {
-        // نمایش لودینگ
-        if (isFirstLoad) {
-            showLoading();
-            updateTimeEl.textContent = '🕒 در حال اتصال به سرورها...';
-        }
-
+    async function fetchExchangeRates() {
         try {
-            let allPrices = [];
-
-            // مرحله ۱: دریافت قیمت دلار به تومان
-            updateTimeEl.textContent = '🕒 دریافت قیمت دلار...';
-            usdToIrr = await fetchUsdToToman();
-            console.log('💵 قیمت دلار به تومان:', usdToIrr);
-
-            // مرحله ۲: دریافت قیمت طلا
-            updateTimeEl.textContent = '🕒 دریافت قیمت طلا...';
-            const goldPrices = await fetchGoldPrices();
-            allPrices = allPrices.concat(goldPrices);
-            console.log('🥇 تعداد قیمت‌های طلا:', goldPrices.length);
-
-            // مرحله ۳: دریافت نرخ ارزها
-            updateTimeEl.textContent = '🕒 دریافت نرخ ارزها...';
-            const currencyRates = await fetchCurrencyRates();
-            allPrices = allPrices.concat(currencyRates);
-            console.log('💱 تعداد نرخ ارزها:', currencyRates.length);
-
-            // مرحله ۴: اگه هیچ داده‌ای نبود، از API ایرانی استفاده کن
-            if (allPrices.length === 0) {
-                updateTimeEl.textContent = '🕒 استفاده از منبع جایگزین...';
-                const iranianPrices = await fetchIranianPrices();
-                allPrices = allPrices.concat(iranianPrices);
-                console.log('🇮🇷 تعداد قیمت‌های ایرانی:', iranianPrices.length);
-            }
-
-            // اگه بازم خالی بود
-            if (allPrices.length === 0) {
-                if (retryCount < MAX_RETRIES) {
-                    retryCount++;
-                    console.log(`🔄 تلاش مجدد (${retryCount}/${MAX_RETRIES})...`);
-                    updateTimeEl.textContent = `🕒 تلاش مجدد ${retryCount}...`;
-                    setTimeout(fetchPrices, 2000);
-                    return;
-                }
-                throw new Error('هیچ داده‌ای از هیچ منبعی دریافت نشد');
-            }
-
-            // حذف موارد تکراری
-            const seen = new Set();
-            allPrices = allPrices.filter(item => {
-                const key = item.name + item.type;
-                if (seen.has(key)) return false;
-                seen.add(key);
-                return true;
-            });
-
-            // مرتب‌سازی
-            allPrices.sort((a, b) => {
-                if (a.type === 'gold' && b.type !== 'gold') return -1;
-                if (a.type !== 'gold' && b.type === 'gold') return 1;
-                if (a.type === 'metal' && b.type === 'currency') return -1;
-                if (a.type === 'currency' && b.type === 'metal') return 1;
-                return (a.priority || 99) - (b.priority || 99);
-            });
-
-            // محدود کردن تعداد
-            const displayItems = allPrices.slice(0, 16);
-
-            // رندر
-            renderPrices(displayItems);
-
-            // بروزرسانی زمان
-            const now = new Date();
-            const options = { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit',
-                hour12: false
-            };
-            const timeStr = now.toLocaleTimeString('fa-IR', options);
-            const dateStr = now.toLocaleDateString('fa-IR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            updateTimeEl.textContent = `🕒 ${dateStr} - ${timeStr}`;
-
-            // ریست شمارنده
-            retryCount = 0;
-            isFirstLoad = false;
-
-            console.log('✅ بروزرسانی با موفقیت انجام شد');
-
-        } catch (error) {
-            console.error('❌ خطای کلی:', error);
+            const resp = await fetch(API.exchange);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             
-            if (retryCount < MAX_RETRIES) {
-                retryCount++;
-                console.log(`🔄 تلاش مجدد پس از خطا (${retryCount}/${MAX_RETRIES})...`);
-                updateTimeEl.textContent = `🕒 تلاش مجدد ${retryCount}...`;
-                setTimeout(fetchPrices, 3000);
-                return;
-            }
-
-            showError('خطا در دریافت قیمت‌ها. لطفاً دوباره تلاش کنید.');
-            retryCount = 0;
+            const data = await resp.json();
+            return data.rates || {};
+            
+        } catch (error) {
+            console.warn('⚠️ خطا در دریافت نرخ ارز:', error.message);
+            return {};
         }
     }
 
     /**
-     * رندر کارت‌های قیمت
-     * @param {Array} items - آرایه آیتم‌ها
+     * دریافت قیمت دلار به تومان از API ایرانی
+     * @returns {Promise<number>} قیمت دلار به تومان
+     */
+    async function fetchUsdToToman() {
+        let price = null;
+        
+        // تلاش اول: API liara
+        try {
+            const resp = await fetch(API.arz);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.arz) {
+                    // جستجوی دلار
+                    for (const [key, value] of Object.entries(data.arz)) {
+                        if (key.includes('دلار')) {
+                            const num = parseFloat(String(value).replace(/[^\d]/g, ''));
+                            if (!isNaN(num) && num > 0) {
+                                price = num;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ خطا در دریافت از liara:', error.message);
+        }
+        
+        // تلاش دوم: API fallback
+        if (!price) {
+            try {
+                const resp = await fetch(API.fallback);
+                if (resp.ok) {
+                    const text = await resp.text();
+                    // استخراج عدد دلار با regex
+                    const match = text.match(/دلار[^\d]*([\d,]+)/);
+                    if (match) {
+                        price = parseFloat(match[1].replace(/,/g, ''));
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ خطا در دریافت از fallback:', error.message);
+            }
+        }
+        
+        // تلاش سوم: مقدار پیش‌فرض
+        if (!price) {
+            console.warn('⚠️ استفاده از قیمت پیش‌فرض دلار');
+            price = 60000; // تومان
+        }
+        
+        return price;
+    }
+
+    /**
+     * ساخت آرایه قیمت ارزها
+     * @param {Object} rates - نرخ‌های ارز
+     * @param {number} usdToToman - قیمت دلار به تومان
+     * @returns {Array} آرایه قیمت‌ها
+     */
+    function buildCurrencyPrices(rates, usdToToman) {
+        const items = [];
+        
+        for (const code of mainCurrencies) {
+            if (rates[code]) {
+                // نرخ: ۱ USD = X units of currency
+                // ما می‌خوایم: ۱ unit of currency = ? USD
+                const rateToUsd = 1 / rates[code];
+                const priceInToman = Math.round(rateToUsd * usdToToman);
+                
+                items.push({
+                    name: getPersianName(code),
+                    code: code,
+                    price: priceInToman,
+                    unit: 'تومان',
+                    icon: getIcon(code),
+                    type: 'currency',
+                    rateToUsd: rateToUsd,
+                    rateFromUsd: rates[code]
+                });
+            }
+        }
+        
+        // مرتب‌سازی: گران‌ترین به ارزان‌ترین
+        items.sort((a, b) => b.price - a.price);
+        
+        return items;
+    }
+
+    /**
+     * رندر کردن قیمت‌ها در DOM
+     * @param {Array} items - آرایه قیمت‌ها
      */
     function renderPrices(items) {
         if (!items || items.length === 0) {
-            showError('قیمتی برای نمایش موجود نیست.');
+            showError('هیچ قیمتی برای نمایش یافت نشد');
             return;
         }
-
+        
+        // محدود کردن به ۲۰ آیتم
+        const displayItems = items.slice(0, 20);
+        
         let html = '<div class="prices-grid">';
-
-        items.forEach((item, index) => {
+        
+        displayItems.forEach((item, index) => {
             const name = item.name || 'نامشخص';
+            const icon = item.icon || '💱';
+            const type = item.type || 'currency';
+            
             let priceDisplay;
             let unitDisplay = item.unit || '';
-
+            
             // فرمت قیمت بر اساس نوع
-            if (item.type === 'gold' || item.type === 'metal') {
-                if (item.unit === 'دلار') {
-                    priceDisplay = '$' + formatPrice(item.price, 2);
-                    if (item.isOunce) {
-                        unitDisplay = 'هر اونس';
-                    } else {
-                        unitDisplay = 'هر گرم';
-                    }
-                } else {
-                    priceDisplay = formatToman(item.price);
-                    unitDisplay = unitDisplay || 'تومان';
-                }
-            } else if (item.type === 'currency') {
+            if (type === 'gold' || type === 'metal') {
+                priceDisplay = '$' + formatPrice(item.price);
+            } else if (type === 'currency') {
                 priceDisplay = formatToman(item.price);
-                unitDisplay = unitDisplay || 'تومان';
+                if (!unitDisplay) unitDisplay = 'تومان';
             } else {
                 priceDisplay = formatPrice(item.price);
             }
-
-            const icon = item.icon || '💱';
-
-            // تغییرات تصادفی (فقط جنبه نمایشی)
-            const changeVal = (Math.random() * 4 - 2).toFixed(2);
+            
+            // تغییرات تصادفی برای نمایش بصری (می‌تونی از API واقعی بگیری)
+            const changeVal = (Math.random() * 3 - 1.5).toFixed(2);
             const isPositive = parseFloat(changeVal) >= 0;
             const changeClass = isPositive ? 'positive' : 'negative';
             const changeSign = isPositive ? '+' : '';
             const changeArrow = isPositive ? '▲' : '▼';
-
-            // انیمیشن تأخیری
+            
+            // انیمیشن تاخیری برای هر کارت
             const animationDelay = index * 0.05;
-
+            
             html += `
-                <div class="price-card" data-type="${item.type || 'currency'}" style="animation: fadeInUp 0.4s ease ${animationDelay}s both;">
+                <div class="price-card" 
+                     data-type="${type}" 
+                     style="animation: fadeInUp 0.5s ease ${animationDelay}s both;">
+                    
                     <div class="currency-name">
-                        <span class="currency-icon">${icon}</span> ${name}
+                        <span class="currency-icon">${icon}</span> 
+                        ${name}
                     </div>
+                    
                     <div class="price-value">${priceDisplay}</div>
                     <div class="unit-text">${unitDisplay}</div>
+                    
                     <div class="change ${changeClass}">
                         ${changeSign}${changeVal}% 
                         <span>${changeArrow}</span>
@@ -628,60 +520,157 @@
                 </div>
             `;
         });
-
+        
         html += '</div>';
+        
+        // اگه بیشتر از ۲۰ تا بود
+        if (items.length > 20) {
+            html += `
+                <div style="text-align:center; margin-top:12px; color:var(--text2); font-size:0.7rem;">
+                    نمایش ${displayItems.length} از ${items.length} قیمت
+                </div>
+            `;
+        }
+        
         container.innerHTML = html;
+    }
+
+    /**
+     * تابع اصلی بروزرسانی قیمت‌ها
+     */
+    async function updatePrices() {
+        // جلوگیری از درخواست همزمان
+        if (isUpdating) {
+            console.log('🔄 بروزرسانی در حال انجام است...');
+            return;
+        }
+        
+        isUpdating = true;
+        showLoading();
+        
+        // غیرفعال کردن دکمه
+        refreshBtn.disabled = true;
+        refreshBtn.style.opacity = '0.6';
+        refreshBtn.style.cursor = 'not-allowed';
+        
+        try {
+            let allItems = [];
+            
+            // ===== دریافت قیمت طلا و فلزات =====
+            console.log('🥇 دریافت قیمت طلا...');
+            const goldItems = await fetchGoldPrices();
+            allItems = allItems.concat(goldItems);
+            console.log(`✅ ${goldItems.length} قیمت طلا دریافت شد`);
+            
+            // ===== دریافت نرخ ارز جهانی =====
+            console.log('💱 دریافت نرخ ارز...');
+            const rates = await fetchExchangeRates();
+            const ratesCount = Object.keys(rates).length;
+            console.log(`✅ ${ratesCount} نرخ ارز دریافت شد`);
+            
+            // ===== دریافت قیمت دلار به تومان =====
+            console.log('🇮🇷 دریافت قیمت دلار به تومان...');
+            usdToIrr = await fetchUsdToToman();
+            console.log(`✅ دلار: ${formatToman(usdToIrr)} تومان`);
+            
+            // ===== ساخت قیمت ارزها =====
+            if (ratesCount > 0 && usdToIrr) {
+                const currencyItems = buildCurrencyPrices(rates, usdToIrr);
+                allItems = allItems.concat(currencyItems);
+                console.log(`✅ ${currencyItems.length} قیمت ارز ساخته شد`);
+            }
+            
+            // ===== بررسی خالی نبودن =====
+            if (allItems.length === 0) {
+                throw new Error('هیچ داده‌ای از سرورها دریافت نشد');
+            }
+            
+            // ===== مرتب‌سازی نهایی =====
+            allItems.sort((a, b) => {
+                // اول طلا و فلزات
+                if (a.type !== b.type) {
+                    if (a.type === 'gold') return -1;
+                    if (b.type === 'gold') return 1;
+                    if (a.type === 'metal') return -1;
+                    if (b.type === 'metal') return 1;
+                }
+                // بعد بر اساس priority
+                if (a.priority && b.priority) return a.priority - b.priority;
+                if (a.priority) return -1;
+                if (b.priority) return 1;
+                // در نهایت بر اساس قیمت (گران‌ترین اول)
+                return (b.price || 0) - (a.price || 0);
+            });
+            
+            // ===== رندر =====
+            renderPrices(allItems);
+            
+            // ===== بروزرسانی زمان =====
+            const now = new Date();
+            lastUpdate = now;
+            const timeStr = now.toLocaleTimeString('fa-IR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const dateStr = now.toLocaleDateString('fa-IR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            updateTimeEl.textContent = `🕒 ${dateStr} - ${timeStr}`;
+            updateTimeEl.title = `قیمت دلار: ${formatToman(usdToIrr)} تومان`;
+            
+            console.log(`🎉 بروزرسانی کامل شد - ${allItems.length} قیمت`);
+            
+        } catch (error) {
+            console.error('❌ خطا:', error.message);
+            showError(error.message || 'خطا در دریافت قیمت‌ها');
+        } finally {
+            // فعال کردن دوباره دکمه
+            isUpdating = false;
+            refreshBtn.disabled = false;
+            refreshBtn.style.opacity = '1';
+            refreshBtn.style.cursor = 'pointer';
+        }
     }
 
     // ===== Event Listeners =====
     
-    // دکمه بروزرسانی دستی
+    // دکمه بروزرسانی
     refreshBtn.addEventListener('click', () => {
-        refreshBtn.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            refreshBtn.style.transform = '';
-        }, 150);
-        
-        isFirstLoad = true;
-        retryCount = 0;
-        fetchPrices();
-    });
-
-    // بروزرسانی با کلید F5 (دسکتاپ)
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'F5') {
-            e.preventDefault();
-            isFirstLoad = true;
-            retryCount = 0;
-            fetchPrices();
+        if (!isUpdating) {
+            updatePrices();
         }
     });
-
+    
+    // بروزرسانی با کلید F5 یا Ctrl+R (به صورت نرمال کار می‌کنه)
+    
     // ===== راه‌اندازی اولیه =====
     console.log('🚀 GNG Tools - Price Tracker');
-    console.log('📡 در حال اتصال به APIها...');
+    console.log('📡 در حال اتصال به سرورها...');
     
-    // اولین بارگذاری
-    fetchPrices();
-
+    // اولین بروزرسانی
+    updatePrices();
+    
     // بروزرسانی خودکار هر ۱۰ دقیقه
     setInterval(() => {
-        console.log('🔄 بروزرسانی خودکار...');
-        fetchPrices();
+        console.log('⏰ بروزرسانی خودکار...');
+        updatePrices();
     }, 600000); // ۱۰ دقیقه
-
-    // ===== مدیریت آفلاین/آنلاین =====
-    window.addEventListener('online', () => {
-        console.log('🌐 اینترنت وصل شد');
-        updateTimeEl.textContent = '🕒 اینترنت وصل شد، در حال بروزرسانی...';
-        isFirstLoad = true;
-        retryCount = 0;
-        fetchPrices();
-    });
-
-    window.addEventListener('offline', () => {
-        console.log('📴 اینترنت قطع شد');
-        updateTimeEl.textContent = '📴 اینترنت قطع است';
-    });
+    
+    // ===== اکسپورت برای استفاده در کنسول =====
+    window.GNG = {
+        updatePrices: updatePrices,
+        getUsdToToman: () => usdToIrr,
+        getLastUpdate: () => lastUpdate,
+        getAPIs: () => API,
+        version: '2.0.0'
+    };
+    
+    console.log('💡 با تایپ GNG در کنسول به ابزارها دسترسی دارید');
+    console.log('   GNG.updatePrices()  → بروزرسانی دستی');
+    console.log('   GNG.getUsdToToman() → قیمت دلار');
+    console.log('   GNG.getLastUpdate() → زمان آخرین بروزرسانی');
 
 })();
